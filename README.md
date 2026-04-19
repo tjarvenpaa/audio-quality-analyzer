@@ -1,3 +1,6 @@
+# Koko projekti on toteutettu wipe koodina, pienenä iltapuhteena.
+Projektia ohjannut ajatus oli luoda podcast edittiä varten työkalu, joka käy läpi äänitiedoston hyvyyttä DSP työkaluilla ja tuottaa tästä llm avulla selityksen ja kommentoinnin. 
+
 # 🎙️ GPU-kiihdytetty Äänenlaatuanalysaattori
 
 ![Docker](https://img.shields.io/badge/docker-latest-blue?logo=docker)
