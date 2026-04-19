@@ -155,9 +155,23 @@ dir output\
 ```
 
 Tulokset:
+- `output/audio_quality_summary_YYYYMMDD_HHMMSS.html` - **Interaktiivinen HTML-yhteenveto** (UUSI!)
 - `output/audio_quality_report_YYYYMMDD_HHMMSS.xlsx` - Excel-raportti
 - `output/reports/*.txt` - Yksityiskohtaiset tekstiraportit
 - `output/visualizations/*.png` - Spektrogrammit ja kaaviot
+
+**HTML-raportti sisältää:**
+- 📊 Vertailutaulukko (kaikki tiedostot yhdessä)
+- 📈 Yhteenvetotilastot
+- 📁 Yksityiskohtaiset analyysit per tiedosto
+- 🖼️ Visualisoinnit embedattuina
+- 🤖 LLM-selitykset (jos käytettävissä)
+- 🎨 Modernit, responsiiviset graafit
+
+**Avaa HTML-raportti selaimessa:**
+```powershell
+start output\audio_quality_summary_*.html
+```
 
 ---
 

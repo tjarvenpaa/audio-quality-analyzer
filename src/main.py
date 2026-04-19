@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 from datetime import datetime
+import base64
+import json
 
 # Import custom modules
 from src.dsp_analyzer import DSPAnalyzer
@@ -289,6 +291,10 @@ class AudioQualityAnalyzer:
             print("\nGenerating visualizations...")
             self._export_visualizations(results, output_folder)
         
+        # 4. HTML summary report
+        print("\nGenerating HTML summary report...")
+        self._export_html_summary(results, output_folder, timestamp)
+        
         print(f"\n✓ Results exported to: {output_folder}")
     
     def _export_excel(self, results: List[Dict], output_folder: str, timestamp: str):
@@ -384,6 +390,465 @@ class AudioQualityAnalyzer:
             )
         
         print(f"  ✓ Visualizations: {viz_folder}")
+    
+    def _export_html_summary(self, results: List[Dict], output_folder: str, timestamp: str):
+        """Export comprehensive HTML summary report"""
+        html_path = os.path.join(output_folder, f'audio_quality_summary_{timestamp}.html')
+        
+        # Calculate statistics
+        avg_scores = {}
+        for result in results:
+            for aspect, data in result['recommendations']['quality_summary'].items():
+                if aspect not in avg_scores:
+                    avg_scores[aspect] = []
+                avg_scores[aspect].append(data['score'])
+        
+        overall_avg = np.mean([r.get('overall_score', 0) for r in results])
+        
+        # Generate HTML
+        html_content = f"""<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Äänenlaatuanalyysi - Yhteenveto</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }}
+        
+        .container {{
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }}
+        
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }}
+        
+        .header h1 {{
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }}
+        
+        .header .meta {{
+            font-size: 1.1em;
+            opacity: 0.9;
+        }}
+        
+        .content {{
+            padding: 40px;
+        }}
+        
+        .summary-cards {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }}
+        
+        .card {{
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }}
+        
+        .card h3 {{
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+        
+        .card .value {{
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }}
+        
+        .section {{
+            margin-bottom: 50px;
+        }}
+        
+        .section h2 {{
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }}
+        
+        .comparison-table {{
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        
+        .comparison-table th {{
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }}
+        
+        .comparison-table td {{
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }}
+        
+        .comparison-table tr:hover {{
+            background: #f8f9fa;
+        }}
+        
+        .score-badge {{
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }}
+        
+        .score-excellent {{ background: #10b981; color: white; }}
+        .score-good {{ background: #3b82f6; color: white; }}
+        .score-fair {{ background: #f59e0b; color: white; }}
+        .score-poor {{ background: #ef4444; color: white; }}
+        
+        .file-detail {{
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }}
+        
+        .file-detail h3 {{
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }}
+        
+        .quality-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }}
+        
+        .quality-item {{
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }}
+        
+        .quality-item .label {{
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }}
+        
+        .quality-item .score {{
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }}
+        
+        .issues-list {{
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }}
+        
+        .issues-list h4 {{
+            color: #856404;
+            margin-bottom: 10px;
+        }}
+        
+        .issues-list ul {{
+            list-style-position: inside;
+            color: #856404;
+        }}
+        
+        .recommendations {{
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }}
+        
+        .recommendations h4 {{
+            color: #0c5460;
+            margin-bottom: 10px;
+        }}
+        
+        .recommendations ul {{
+            list-style-position: inside;
+            color: #0c5460;
+        }}
+        
+        .llm-insight {{
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }}
+        
+        .llm-insight h4 {{
+            color: #0d47a1;
+            margin-bottom: 15px;
+            font-family: 'Segoe UI', sans-serif;
+        }}
+        
+        .visualization {{
+            margin: 20px 0;
+            text-align: center;
+        }}
+        
+        .visualization img {{
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }}
+        
+        .footer {{
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }}
+        
+        @media print {{
+            body {{
+                background: white;
+            }}
+            .container {{
+                box-shadow: none;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Äänenlaatuanalyysi</h1>
+            <div class="meta">
+                <p>Analysoitu: {datetime.now().strftime('%d.%m.%Y klo %H:%M')}</p>
+                <p>Tiedostoja: {len(results)} | Keskiarvolaatu: {overall_avg:.1f}/100</p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Analysoituja tiedostoja</h3>
+                    <div class="value">{len(results)}</div>
+                </div>
+                <div class="card">
+                    <h3>Keskiarvolaatu</h3>
+                    <div class="value">{overall_avg:.1f}/100</div>
+                </div>
+                <div class="card">
+                    <h3>Paras tulos</h3>
+                    <div class="value">{max([r.get('overall_score', 0) for r in results]):.1f}/100</div>
+                </div>
+                <div class="card">
+                    <h3>Heikoin tulos</h3>
+                    <div class="value">{min([r.get('overall_score', 0) for r in results]):.1f}/100</div>
+                </div>
+            </div>
+            
+            <!-- Comparison Table -->
+            <div class="section">
+                <h2>📊 Vertailutaulukko</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Tiedosto</th>
+                            <th>Kokonaislaatu</th>
+                            <th>Selkeys</th>
+                            <th>Kohina</th>
+                            <th>Taajuus</th>
+                            <th>Dynamiikka</th>
+                            <th>Loudness</th>
+                            <th>Ongelmat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"""
+        
+        # Add rows to comparison table
+        for result in sorted(results, key=lambda x: x.get('overall_score', 0), reverse=True):
+            overall = result.get('overall_score', 0)
+            badge_class = ('score-excellent' if overall >= 80 else 
+                          'score-good' if overall >= 60 else 
+                          'score-fair' if overall >= 40 else 'score-poor')
+            
+            quality = result['recommendations']['quality_summary']
+            issues_count = len(result['recommendations'].get('issues_detected', []))
+            
+            html_content += f"""
+                        <tr>
+                            <td><strong>{result['filename']}</strong></td>
+                            <td><span class="score-badge {badge_class}">{overall:.1f}</span></td>
+                            <td>{quality.get('clarity', {}).get('score', 0):.1f}</td>
+                            <td>{quality.get('noise', {}).get('score', 0):.1f}</td>
+                            <td>{quality.get('frequency', {}).get('score', 0):.1f}</td>
+                            <td>{quality.get('dynamic_range', {}).get('score', 0):.1f}</td>
+                            <td>{quality.get('loudness', {}).get('score', 0):.1f}</td>
+                            <td>{issues_count} ⚠</td>
+                        </tr>
+"""
+        
+        html_content += """
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Individual File Details -->
+            <div class="section">
+                <h2>📁 Yksityiskohtaiset analyysit</h2>
+"""
+        
+        # Add detailed section for each file
+        for result in results:
+            quality = result['recommendations']['quality_summary']
+            overall = result.get('overall_score', 0)
+            badge_class = ('score-excellent' if overall >= 80 else 
+                          'score-good' if overall >= 60 else 
+                          'score-fair' if overall >= 40 else 'score-poor')
+            
+            html_content += f"""
+                <div class="file-detail">
+                    <h3>🎵 {result['filename']}</h3>
+                    <p><strong>Kokonaislaatu:</strong> <span class="score-badge {badge_class}">{overall:.1f}/100</span></p>
+                    <p><strong>Kesto:</strong> {result['metadata']['duration_seconds']:.1f}s | 
+                       <strong>Stereo:</strong> {'Kyllä' if result['metadata']['is_stereo'] else 'Ei'} | 
+                       <strong>Sample rate:</strong> {result['metadata']['sample_rate']} Hz</p>
+                    
+                    <div class="quality-grid">
+"""
+            
+            # Quality scores
+            for aspect, data in quality.items():
+                score = data.get('score', 0)
+                rating = data.get('rating', 'N/A')
+                html_content += f"""
+                        <div class="quality-item">
+                            <div class="label">{aspect.title()}</div>
+                            <div class="score">{score:.1f}/100</div>
+                            <div class="label">{rating}</div>
+                        </div>
+"""
+            
+            html_content += """
+                    </div>
+"""
+            
+            # Issues
+            issues = result['recommendations'].get('issues_detected', [])
+            if issues:
+                html_content += """
+                    <div class="issues-list">
+                        <h4>⚠️ Havaitut ongelmat</h4>
+                        <ul>
+"""
+                for issue in issues[:10]:  # Top 10
+                    html_content += f"""
+                            <li><strong>[{issue['severity'].upper()}]</strong> {issue['issue'].replace('_', ' ').title()} (Varmuus: {issue['confidence']*100:.0f}%)</li>
+"""
+                html_content += """
+                        </ul>
+                    </div>
+"""
+            
+            # Recommendations
+            actions = result['recommendations'].get('priority_actions', [])
+            if actions:
+                html_content += """
+                    <div class="recommendations">
+                        <h4>💡 Suositellut toimenpiteet</h4>
+                        <ul>
+"""
+                for action in actions[:5]:  # Top 5
+                    html_content += f"""
+                            <li>{action.replace('_', ' ').title()}</li>
+"""
+                html_content += """
+                        </ul>
+                    </div>
+"""
+            
+            # LLM Explanation
+            if result.get('llm_explanation'):
+                html_content += f"""
+                    <div class="llm-insight">
+                        <h4>🤖 AI-analyysi (LLM)</h4>
+                        {result['llm_explanation']}
+                    </div>
+"""
+            
+            # Visualization
+            viz_path = os.path.join('visualizations', f"{Path(result['filename']).stem}_analysis.png")
+            if os.path.exists(os.path.join(output_folder, viz_path)):
+                html_content += f"""
+                    <div class="visualization">
+                        <img src="{viz_path}" alt="Visualisointi: {result['filename']}">
+                    </div>
+"""
+            
+            html_content += """
+                </div>
+"""
+        
+        html_content += """
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🎙️ GPU-kiihdytetty äänenlaatuanalysaattori | Generoi """ + datetime.now().strftime('%d.%m.%Y %H:%M:%S') + """</p>
+            <p>Teknologia: PyTorch CUDA + Ollama LLM + DSP-analyysi</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+        
+        # Write HTML file
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        print(f"  ✓ HTML summary: {html_path}")
 
 
 def main():

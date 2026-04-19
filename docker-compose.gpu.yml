@@ -39,6 +39,7 @@ services:
       ollama:
         condition: service_healthy
     volumes:
+      - ./src:/app/src
       - ./input_folder:/app/input_folder
       - ./output:/app/output
       - ./config.yaml:/app/config.yaml
