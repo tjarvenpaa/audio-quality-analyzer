@@ -1,0 +1,40 @@
+DYNAMIC RANGE ISSUE ANALYSIS
+
+Issue Type: {issue_type}
+- Over-compression: Dynamic range too narrow
+- Under-compression: Dynamic range too wide
+
+Current Dynamic Range: {dynamic_range_db} dB
+Crest Factor: {crest_factor_db} dB
+Ideal Range: 8-18 dB (podcast: 8-12 dB, music: 10-18 dB)
+
+ANALYSIS REQUIRED:
+
+1. **What's happening**
+   - Explain current dynamic range in context
+   - Is it over-compressed, under-compressed, or right?
+   - How this affects the listening experience
+
+2. **Causes**
+   - Over-compression: too much limiting/compression
+   - Under-compression: no dynamics control
+   - Specific culprits based on crest factor
+
+3. **Practical impact**
+   - Listening fatigue (if over-compressed)
+   - Inconsistent levels (if under-compressed)
+   - Suitability for different platforms (YouTube, Spotify, etc.)
+
+4. **Correction strategy**
+   - Compression settings to try
+   - Multi-band vs. single-band
+   - Parallel compression techniques
+   - Target numbers to aim for
+
+5. **The "why" behind dynamics**
+   - Why dynamic range matters
+   - Loudn ess war context
+   - Platform normalization (streaming services)
+   - Genre expectations
+
+Provide specific compressor settings (ratio, threshold, attack, release) if relevant.

@@ -1,0 +1,42 @@
+CLIPPING ISSUE ANALYSIS
+
+Issue Type: Digital Clipping / Distortion
+Severity: {severity}
+Confidence: {confidence}
+
+Clipping Percentage: {clipping_percentage}%
+Peak Level: {peak_db} dB
+Maximum Recommended: -1.0 dB (better: -3.0 dB)
+
+⚠️ CRITICAL: Clipping is permanent distortion that cannot be fully corrected!
+
+ANALYSIS REQUIRED:
+
+1. **What is clipping?**
+   - Explain digital clipping in simple terms
+   - Why it's one of the worst audio problems
+   - How severe this specific case is
+
+2. **Impact on audio**
+   - How it sounds to listeners
+   - Which parts are affected (peaks, sustained, throughout)
+   - Whether it's recoverable or needs re-recording
+
+3. **Why it happened**
+   - Input gain too high
+   - Insufficient headroom
+   - Over-processing/limiting
+   - Specific cause based on the analysis
+
+4. **Immediate actions**
+   - Can this recording be salvaged? (realistic assessment)
+   - Declipping tools that might help (with limitations)
+   - How to prevent in future recordings
+
+5. **Prevention strategy**
+   - Proper gain staging
+   - Headroom recommendations
+   - Monitoring techniques
+   - When to use limiting vs. gain reduction
+
+Be honest about whether re-recording is necessary. Provide specific gain reduction values.

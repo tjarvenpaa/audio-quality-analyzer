@@ -1,0 +1,86 @@
+# Docker Compose - Audio Quality AI Stack
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: audio-quality-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # For GPU support (NVIDIA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    networks:
+      - audio-ai-network
+
+  # Audio Quality Analyzer
+  audio-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audio-quality-analyzer
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./input_folder:/app/input_folder
+      - ./output:/app/output
+      - ./config.yaml:/app/config.yaml
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - CUDA_VISIBLE_DEVICES=0  # For GPU
+    # For GPU support (NVIDIA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    networks:
+      - audio-ai-network
+    command: python src/main.py
+
+  # Optional: FastAPI server (future)
+  # api-server:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.api
+  #   container_name: audio-quality-api
+  #   depends_on:
+  #     - ollama
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./input_folder:/app/input_folder
+  #     - ./output:/app/output
+  #   environment:
+  #     - OLLAMA_URL=http://ollama:11434
+  #   networks:
+  #     - audio-ai-network
+  #   command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  audio-ai-network:
+    driver: bridge

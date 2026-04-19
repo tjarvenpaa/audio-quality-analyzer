@@ -1,0 +1,38 @@
+GENERIC ISSUE ANALYSIS
+
+Issue: {issue}
+Severity: {severity}
+Confidence: {confidence}
+
+Context:
+{context}
+
+Please analyze this audio quality issue:
+
+1. **Explanation**
+   - What this issue means in plain language
+   - Why it matters for audio quality
+   - How severe this particular case is
+
+2. **Common Causes**
+   - What typically creates this issue
+   - Recording environment factors
+   - Equipment or technique problems
+
+3. **Impact**
+   - How listeners will experience this
+   - Specific problems it creates
+   - Contexts where it's more/less acceptable
+
+4. **Solutions**
+   - Immediate fixes (software/processing)
+   - Better techniques for future
+   - Equipment considerations if relevant
+   - Specific settings or approaches to try
+
+5. **Prevention**
+   - How to avoid this in future recordings
+   - Monitoring during recording
+   - Best practices
+
+Be specific and practical. Provide measurable targets where possible.

@@ -1,0 +1,34 @@
+NOISE ISSUE ANALYSIS
+
+Issue Type: Background Noise / Low Signal-to-Noise Ratio
+Severity: {severity}
+Confidence: {confidence}
+
+Current SNR: {snr_db} dB
+Noise Floor: {noise_floor_db} dB
+Target SNR: >45 dB (excellent), >25 dB (minimum acceptable)
+
+ANALYSIS REQUIRED:
+
+1. **What is this issue?**
+   - Explain what background noise and SNR mean
+   - Why this specific SNR value is problematic
+   - How it affects listening experience
+
+2. **Likely causes**
+   - Common sources of this noise level
+   - Recording environment factors
+   - Equipment-related causes
+
+3. **Specific recommendations**
+   - Noise reduction settings to try
+   - EQ techniques for this noise type
+   - Recording improvements for next time
+   - Software tools that can help
+
+4. **Expected results**
+   - What SNR level to target
+   - How much improvement is realistic
+   - Trade-offs to be aware of
+
+Be specific with dB values and frequency ranges. Provide software/plugin recommendations if relevant.

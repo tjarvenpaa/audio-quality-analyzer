@@ -1,0 +1,48 @@
+IMPROVEMENT PLAN GENERATOR
+
+CURRENT STATE:
+{current_scores}
+
+TARGET STATE:
+{targets}
+
+GAP ANALYSIS:
+{gap_analysis}
+
+GENERATE A STEP-BY-STEP IMPROVEMENT PLAN:
+
+1. **Priority Assessment**
+   - Which gaps are most critical
+   - Which improvements will have biggest impact
+   - Realistic timeline for each improvement
+
+2. **Phase 1: Quick Wins** (can do immediately)
+   - Simple fixes with software
+   - No equipment or space changes needed
+   - Expected improvement: X points
+
+3. **Phase 2: Process Improvements** (this week/month)
+   - Workflow changes
+   - Better techniques
+   - Software/plugins to acquire
+   - Expected improvement: X points
+
+4. **Phase 3: Equipment/Environment** (longer term)
+   - Equipment upgrades if needed
+   - Room treatment
+   - Recording space improvements
+   - Expected improvement: X points
+
+5. **Maintenance Plan**
+   - How to maintain quality once targets met
+   - Regular checks to perform
+   - Quality benchmarks to monitor
+
+For each phase, provide:
+- Specific actions with steps
+- Estimated cost (free / low / medium / high)
+- Expected time to implement
+- Point improvement estimate
+- Dependencies and prerequisites
+
+Be realistic about timeline and costs. Focus on most effective improvements first.

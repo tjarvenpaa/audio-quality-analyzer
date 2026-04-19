@@ -1,0 +1,92 @@
+# GPU-kiihdytetyn äänenlaatuanalysaattorin konfiguraatio
+
+# Yleisasetukset
+general:
+  input_folder: "input_folder"
+  output_folder: "output"
+  use_gpu: true
+  device: "cuda"  # cuda tai cpu
+  batch_size: 4
+
+# DSP-analyysiasetukset
+dsp:
+  sample_rate: 44100
+  fft_size: 2048
+  hop_length: 512
+  n_mels: 128
+  
+  # Taajuusalueet analyysiin (Hz)
+  frequency_bands:
+    sub_bass: [20, 60]
+    bass: [60, 250]
+    low_mids: [250, 500]
+    mids: [500, 2000]
+    high_mids: [2000, 4000]
+    presence: [4000, 6000]
+    brilliance: [6000, 20000]
+
+# Laatukriteerit
+quality_criteria:
+  loudness:
+    target_lufs: -16.0
+    tolerance: 2.0
+  
+  peak:
+    max_peak_db: -1.0
+    true_peak_max: -0.5
+  
+  snr:
+    minimum_db: 25.0
+    excellent_db: 45.0
+  
+  dynamic_range:
+    minimum_db: 6.0
+    target_db: 12.0
+  
+  stereo:
+    correlation_min: -1.0
+    correlation_max: 1.0
+    ideal_range: [0.3, 0.7]
+
+# AI-mallin asetukset
+ai_model:
+  model_type: "audio_quality_transformer"
+  embedding_dim: 512
+  num_heads: 8
+  num_layers: 6
+  dropout: 0.1
+  
+  # Feature extraction
+  features:
+    - spectral_contrast
+    - chroma
+    - mfcc
+    - tonnetz
+    - zero_crossing_rate
+    - spectral_rolloff
+    - spectral_centroid
+    - spectral_bandwidth
+
+# LLM Explainer asetukset
+llm:
+  enabled: true  # Aktivoitu phi-mallilla
+  ollama_url: "http://localhost:11434"  # Ollama API URL
+  model: "phi"  # phi (3GB) - pienempi ja nopeampi kuin mistral
+  temperature: 0.7  # 0.0 = deterministinen, 1.0 = luova
+  max_tokens: 800  # Vähennetty phi:lle
+  timeout: 240  # seconds (lisätty 180->240 koska jotkin tiedostot hitaampia)
+
+# Raportointi
+reporting:
+  generate_visualizations: true
+  generate_excel: true
+  generate_pdf_report: false
+  language: "fi"  # fi tai en
+  
+  visualization_types:
+    - waveform
+    - spectrogram
+    - frequency_response
+    - stereo_field
+    - dynamic_range
+    - phase_correlation
