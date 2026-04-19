@@ -45,6 +45,89 @@ Analysoi podcasteja, äänitallenteitä ja musiikkia käyttäen DSP-analytiikkaa
 - NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 - 8GB+ RAM, 4GB+ GPU VRAM
 
+---
+
+## 🖥️ Laitteisto- ja järjestelmävaatimukset
+
+### Testattu laitteisto
+
+**Kehitysympäristö:**
+- **GPU:** NVIDIA RTX PRO 4000 Blackwell (8GB VRAM)
+- **CPU:** AMD Ryzen / Intel Core i7+ (8+ ytimiä suositeltu)
+- **RAM:** 32GB DDR4
+- **Tallennustila:** 50GB+ vapaata tilaa (Docker-imaget + Ollama-mallit)
+- **Käyttöjärjestelmä:** Windows 11 Pro + WSL2 (Ubuntu 22.04)
+
+### Minimirautavaatimukset
+
+**CPU:**
+- 4+ ytimiä (DSP-analyysi on CPU-intensiivinen)
+- AVX2-tuki suositeltu (numpy/librosa-optimoinnit)
+
+**GPU:**
+- NVIDIA GPU CUDA Compute Capability 3.7+ (Kepler tai uudempi)
+- 4GB+ VRAM (Phi-malli 3GB + PyTorch overhead)
+- CUDA 11.8 tai 12.x yhteensopiva
+
+**RAM:**
+- 8GB minimi (batch-analyysi vaatii enemmän)
+- 16GB+ suositeltu useiden tiedostojen käsittelyyn
+
+**Tallennustila:**
+- 30GB vapaata tilaa minimissään:
+  - Docker-imaget: ~10GB
+  - Ollama Phi-malli: ~3GB
+  - PyTorch + riippuvuudet: ~5GB
+  - Työskentely-/output-tila: ~10GB
+
+### Suositellut speksit (tuotantokäyttö)
+
+- **GPU:** NVIDIA RTX 3060+ / A4000+ / T4+ (6-12 GB VRAM)
+- **CPU:** 8+ ytimiä, 3.0+ GHz
+- **RAM:** 32GB+ (isot batch-käsittelyt)
+- **Tallennustila:** 100GB+ SSD/NVMe (nopea I/O)
+
+### GPU-yhteensopivuus
+
+✅ **Testatut ja tuetut:**
+- NVIDIA RTX-sarja (20xx, 30xx, 40xx)
+- NVIDIA Quadro / RTX Pro -sarja
+- NVIDIA Tesla / A-series (datacenter)
+- NVIDIA GTX 16xx -sarja (rajallinen suorituskyky)
+
+❌ **Ei tuettu:**
+- AMD Radeon GPU:t (ei CUDA-tukea)
+- Intel Arc GPU:t (ei CUDA-tukea)
+- CPU-only mode (toimii mutta erittäin hidas)
+
+### Käyttöjärjestelmät
+
+**✅ Tuettu (Docker):**
+- **Windows 10/11** + WSL2 + Docker Desktop
+- **Linux** (Ubuntu 20.04+, Debian 11+, CentOS 8+)
+- **macOS** (CPU-only, ei GPU-tuki - Apple Silicon ei yhteensopiva NVIDIA CUDA:n kanssa)
+
+**Lokaali asennus (ilman Dockeria):**
+- Python 3.10+ vaaditaan
+- CUDA Toolkit 11.8 asennettuna
+- NVIDIA GPU-ajurit (535.xx tai uudempi)
+
+### Docker-vaatimukset
+
+- **Docker Desktop:** 4.20+
+- **Docker Compose:** 2.17+
+- **NVIDIA Container Toolkit:** Asennettuna ja konfiguroitu
+- **WSL2** (Windows): Kernel 5.10+
+
+**Testaa GPU-näkyvyys Dockerissa:**
+```powershell
+docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+```
+
+Jos komento näyttää GPU-tiedot, Docker GPU-tuki on kunnossa!
+
+---
+
 ### Käynnistys
 
 ```powershell
