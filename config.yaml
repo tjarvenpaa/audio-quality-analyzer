@@ -70,7 +70,7 @@ ai_model:
 # LLM Explainer asetukset
 llm:
   enabled: true  # Aktivoitu phi-mallilla
-  ollama_url: "http://localhost:11434"  # Ollama API URL
+  ollama_url: "http://ollama:11434"  # Ollama API URL (use 'ollama' hostname in Docker)
   model: "phi"  # phi (3GB) - pienempi ja nopeampi kuin mistral
   temperature: 0.7  # 0.0 = deterministinen, 1.0 = luova
   max_tokens: 800  # Vähennetty phi:lle

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ Äänenlaatuanalysaattori</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .file-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .file-item.selected {
+            background: #e7f3ff;
+            border-color: #667eea;
+        }
+
+        .file-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-bar-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .progress-message {
+            color: #333;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .report-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .report-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .report-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .report-type.html {
+            background: #10b981;
+            color: white;
+        }
+
+        .report-type.excel {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .report-type.text {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .report-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .report-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Äänenlaatuanalysaattori</h1>
+            <p>GPU-kiihdytetty analyysi + AI-suositukset + LLM-selitykset</p>
+        </header>
+
+        <div class="content">
+            <!-- File Selection -->
+            <div class="section">
+                <h2>📁 Valitse analysoitavat tiedostot</h2>
+                <div id="file-list" class="file-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔄</div>
+                        <p>Ladataan tiedostoja...</p>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="analyze-btn" disabled>
+                        <span id="analyze-icon">🚀</span>
+                        <span id="analyze-text">Käynnistä analyysi</span>
+                    </button>
+                    <button class="btn btn-secondary" id="select-all-btn">
+                        ☑️ Valitse kaikki
+                    </button>
+                    <button class="btn btn-secondary" id="refresh-btn">
+                        🔄 Päivitä lista
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section" id="progress-section">
+                <h2>⏳ Analyysin edistyminen</h2>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%">
+                        <span id="progress-percent">0%</span>
+                    </div>
+                </div>
+                <div class="progress-message" id="progress-message">
+                    Aloitetaan...
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="section">
+                <h2>📊 Analysointiraportit</h2>
+                <div class="alert alert-info" id="reports-info">
+                    💡 Raportit ilmestyvät tähän analyysin valmistuttua
+                </div>
+                <div class="reports-grid" id="reports-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let selectedFiles = new Set();
+        let isAnalyzing = false;
+
+        // Load audio files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                console.log('✓ Loaded files:', data.files.length);
+                displayFiles(data.files);
+            } catch (error) {
+                console.error('❌ Error loading files:', error);
+                document.getElementById('file-list').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Virhe tiedostojen lataamisessa</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display files
+        function displayFiles(files) {
+            const fileList = document.getElementById('file-list');
+            
+            if (files.length === 0) {
+                fileList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <p>Ei äänitiedostoja input_folder-kansiossa</p>
+                    </div>
+                `;
+                return;
+            }
+
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item" data-filename="${file.name}" onclick="toggleFile('${file.name}')">
+                    <input type="checkbox" id="file-${file.name}" onchange="toggleFile('${file.name}')">
+                    <div class="file-info">
+                        <div class="file-name">🎵 ${file.name}</div>
+                        <div class="file-meta">
+                            ${formatSize(file.size)} • Muokattu: ${formatDate(file.modified)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle file selection
+        function toggleFile(filename) {
+            const checkbox = document.getElementById(`file-${filename}`);
+            const fileItem = checkbox.parentElement;
+            
+            if (selectedFiles.has(filename)) {
+                selectedFiles.delete(filename);
+                fileItem.classList.remove('selected');
+                checkbox.checked = false;
+            } else {
+                selectedFiles.add(filename);
+                fileItem.classList.add('selected');
+                checkbox.checked = true;
+            }
+            
+            updateAnalyzeButton();
+        }
+
+        // Select all files
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.file-item input[type="checkbox"]');
+            const allSelected = selectedFiles.size === checkboxes.length;
+            
+            checkboxes.forEach(checkbox => {
+                const filename = checkbox.id.replace('file-', '');
+                const fileItem = checkbox.parentElement;
+                
+                if (allSelected) {
+                    selectedFiles.delete(filename);
+                    fileItem.classList.remove('selected');
+                    checkbox.checked = false;
+                } else {
+                    selectedFiles.add(filename);
+                    fileItem.classList.add('selected');
+                    checkbox.checked = true;
+                }
+            });
+            
+            updateAnalyzeButton();
+        });
+
+        // Update analyze button state
+        function updateAnalyzeButton() {
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = selectedFiles.size === 0 || isAnalyzing;
+            
+            const text = document.getElementById('analyze-text');
+            if (selectedFiles.size > 0) {
+                text.textContent = `Analysoi ${selectedFiles.size} tiedostoa`;
+            } else {
+                text.textContent = 'Käynnistä analyysi';
+            }
+        }
+
+        // Start analysis
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
+            if (selectedFiles.size === 0 || isAnalyzing) return;
+            
+            isAnalyzing = true;
+            document.getElementById('progress-section').classList.add('active');
+            updateAnalyzeButton();
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({files: Array.from(selectedFiles)})
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Analysis failed to start');
+                }
+                
+            } catch (error) {
+                console.error('Error starting analysis:', error);
+                alert('Virhe analyysin käynnistyksessä');
+                isAnalyzing = false;
+                updateAnalyzeButton();
+            }
+        });
+
+        // Update progress
+        function updateProgress(data) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const progressMessage = document.getElementById('progress-message');
+            
+            const percent = data.total > 0 ? Math.round((data.progress / data.total) * 100) : 0;
+            
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+            progressMessage.textContent = data.message;
+            
+            // Check if analysis is complete
+            if (data.message.includes('valmis') || data.progress === data.total) {
+                setTimeout(() => {
+                    isAnalyzing = false;
+                    updateAnalyzeButton();
+                    loadReports();
+                }, 1000);
+            }
+        }
+
+        // Load reports
+        async function loadReports() {
+            try {
+                const response = await fetch('/api/reports');
+                const data = await response.json();
+                displayReports(data);
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        // Display reports
+        function displayReports(reports) {
+            const grid = document.getElementById('reports-grid');
+            const allReports = [
+                ...reports.html.map(r => ({...r, type: 'html', icon: '🌐'})),
+                ...reports.excel.map(r => ({...r, type: 'excel', icon: '📊'})),
+                ...reports.text.map(r => ({...r, type: 'text', icon: '📝'}))
+            ];
+            
+            if (allReports.length === 0) {
+                grid.innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('reports-info').textContent = 
+                `📚 ${allReports.length} raporttia saatavilla`;
+            
+            grid.innerHTML = allReports.map(report => `
+                <div class="report-card">
+                    <span class="report-type ${report.type}">${report.icon} ${report.type.toUpperCase()}</span>
+                    <div class="report-name">${report.name}</div>
+                    <div class="report-meta">
+                        ${formatSize(report.size)} • ${formatDate(report.created)}
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-primary btn-small" onclick="openReport('${report.path}')">
+                            👁️ Avaa
+                        </button>
+                        ${report.type !== 'html' ? `
+                            <button class="btn btn-secondary btn-small" onclick="downloadReport('${report.path}', '${report.name}')">
+                                💾 Lataa
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Open report
+        function openReport(path) {
+            window.open(path, '_blank');
+        }
+
+        // Download report
+        function downloadReport(path, filename) {
+            const a = document.createElement('a');
+            a.href = path;
+            a.download = filename;
+            a.click();
+        }
+
+        // Refresh files
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            selectedFiles.clear();
+            loadFiles();
+            loadReports();
+        });
+
+        // Utility functions
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('fi-FI');
+        }
+
+        // ===== Socket.io Connection =====
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('✅ WebSocket yhdistetty!');
+        });
+
+        socket.on('disconnect', () => {
+            console.warn('⚠️ WebSocket yhteys katkennut');
+        });
+
+        socket.on('progress', (data) => {
+            console.log('📊 Progress update:', data);
+            updateProgress(data);
+        });
+
+        socket.on('status', (data) => {
+            console.log('📡 Status update:', data);
+            if (data.running) {
+                isAnalyzing = true;
+                document.getElementById('progress-section').classList.add('active');
+            } else {
+                isAnalyzing = false;
+            }
+            updateAnalyzeButton();
+        });
+
+        // Initial load
+        loadFiles();
+        loadReports();
+        
+        // Refresh reports every 5 seconds when analyzing
+        setInterval(() => {
+            if (isAnalyzing) {
+                loadReports();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

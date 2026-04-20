@@ -1,0 +1,46 @@
+# Dockerfile for Web Interface
+FROM python:3.10-slim
+
+LABEL maintainer="Audio Quality AI"
+LABEL description="Web interface for audio quality analyzer"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies including Docker CLI
+RUN apt-get update && apt-get install -y \
+    curl \
+    && curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && rm get-docker.sh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first
+COPY requirements.txt /app/
+
+# Install all Python dependencies from requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Install Flask and web-specific dependencies
+RUN pip3 install --no-cache-dir \
+    flask==3.0.0 \
+    flask-cors==4.0.0 \
+    flask-socketio==5.3.5 \
+    python-socketio==5.10.0 \
+    eventlet==0.33.3
+
+# Copy web application
+COPY web/ /app/web/
+
+# Expose port
+EXPOSE 5000
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=web/app.py
+
+# Run web server
+CMD ["python3", "web/app.py"]

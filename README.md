@@ -50,7 +50,41 @@ Analysoi podcasteja, äänitallenteitä ja musiikkia käyttäen DSP-analytiikkaa
 
 ---
 
-## 🖥️ Laitteisto- ja järjestelmävaatimukset
+## 🌐 **WEB-KÄYTTÖLIITTYMÄ (SUOSITELTU)**
+
+### Käynnistys selainpohjaisella käyttöliittymällä:
+
+```powershell
+# 1. Käynnistä web-palvelin + analyysimoottorit
+.\start-web.ps1
+
+# TAI manuaalisesti:
+docker compose -f docker-compose.gpu.yml up -d --build
+
+# 2. Avaa selaimessa
+http://localhost:5000
+```
+
+**Web-käyttöliittymän ominaisuudet:**
+- 📁 **Tiedostojen valinta** - Valitse analysoitavat tiedostot käyttöliittymästä
+- 🚀 **Analyysin käynnistys** - Klikkaa nappia ja seuraa edistymistä
+- 📊 **Reaaliaikainen seuranta** - WebSocket-pohjainen progress bar
+- 📄 **Raporttien tarkastelu** - Avaa HTML/Excel/teksti-raportit suoraan selaimesta
+- 🎨 **Moderni UI** - Responsiivinen, käyttöystävällinen design
+
+**Käyttöohje:**
+1. Kopioi äänitiedostoja `input_folder/`-kansioon
+2. Avaa http://localhost:5000
+3. Valitse analysoitavat tiedostot (checkbox)
+4. Klikkaa "Käynnistä analyysi"
+5. Seuraa edistymistä reaaliajassa
+6. Tarkastele valmistuneita raportteja
+
+---
+
+## 💻 Komentorivikäyttö (vaihtoehtoinen)
+
+### Käynnistys
 
 ### Testattu laitteisto
 
@@ -141,16 +175,16 @@ cd audio-quality-analyzer
 # 2. Käynnistä kontit (GPU-tuki)
 docker compose -f docker-compose.gpu.yml up -d
 
-# 3. Lataa LLM-malli (ensimmäisellä kerralla)
+# 2. Lataa LLM-malli (ensimmäisellä kerralla)
 docker exec audio-quality-ollama-gpu ollama pull phi
 
-# 4. Kopioi äänitiedostoja
+# 3. Kopioi äänitiedostoja
 Copy-Item podcast.wav input_folder\
 
-# 5. Aja analyysi
+# 4. Aja analyysi
 docker exec audio-quality-analyzer-gpu python3 src/main.py
 
-# 6. Tarkista tulokset
+# 5. Tarkista tulokset
 dir output\
 ```
 

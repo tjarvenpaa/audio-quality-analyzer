@@ -1,4 +1,4 @@
-# Docker Compose with GPU Support
+# Docker Compose with GPU Support + Web Interface
 
 services:
   # Ollama LLM Service with GPU
@@ -58,6 +58,33 @@ services:
       - audio-ai-network
     # Uncomment to run analysis automatically on startup:
     # command: python3 watch.py
+  
+  # Web Interface
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: audio-quality-web
+    restart: unless-stopped
+    depends_on:
+      - audio-analyzer
+      - ollama
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./web:/app/web
+      - ./src:/app/src
+      - ./input_folder:/app/input_folder
+      - ./output:/app/output
+      - ./config.yaml:/app/config.yaml
+      # Docker socket for docker exec access
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    networks:
+      - audio-ai-network
 
 volumes:
   ollama_data:

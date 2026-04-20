@@ -857,7 +857,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='GPU-kiihdytetty äänenlaatu-analysaattori')
     parser.add_argument('--config', default='config.yaml', help='Config file path')
-    parser.add_argument('--input', help='Input audio file or folder')
+    parser.add_argument('--input', action='append', help='Input audio file(s) or folder (can be specified multiple times)')
     parser.add_argument('--output', help='Output folder for results')
     parser.add_argument('--single', action='store_true', help='Analyze single file')
     parser.add_argument('--notes', default='', help='Analysis notes')
@@ -868,12 +868,33 @@ def main():
     analyzer = AudioQualityAnalyzer(config_path=args.config)
     
     # Run analysis
-    if args.single and args.input:
-        # Single file mode
-        results = [analyzer.analyze_file(args.input, notes=args.notes)]
+    results = []
+    
+    if args.input:
+        # Check if we have a list of files or a single folder
+        input_list = args.input if isinstance(args.input, list) else [args.input]
+        
+        # Check if first input is a directory
+        first_input = Path(input_list[0])
+        if first_input.is_dir():
+            # Batch mode - analyze folder
+            results = analyzer.analyze_batch(input_folder=str(first_input))
+        else:
+            # Multiple files mode - analyze each file
+            print(f"\nAnalyzing {len(input_list)} file(s)...")
+            for i, filepath in enumerate(input_list, 1):
+                print(f"\n[{i}/{len(input_list)}] Analyzing: {filepath}")
+                try:
+                    result = analyzer.analyze_file(filepath, notes=args.notes)
+                    results.append(result)
+                except Exception as e:
+                    print(f"  ✗ Error analyzing {filepath}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    continue
     else:
-        # Batch mode
-        results = analyzer.analyze_batch(input_folder=args.input)
+        # No input specified - use default folder from config
+        results = analyzer.analyze_batch()
     
     # Export results
     if results:
