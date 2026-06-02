@@ -80,14 +80,22 @@ class AudioQualityAnalyzer:
             ollama_url = os.environ.get('OLLAMA_URL', 
                                         self.config.get('llm', {}).get('ollama_url', 'http://localhost:11434'))
             llm_model = self.config.get('llm', {}).get('model', 'mistral')
+            llm_temperature = self.config.get('llm', {}).get('temperature', 0.3)
+            llm_max_tokens = self.config.get('llm', {}).get('max_tokens', 800)
             llm_timeout = self.config.get('llm', {}).get('timeout', 180)
             self.llm_explainer = LLMExplainer(
                 ollama_url=ollama_url, 
                 model=llm_model,
+                temperature=llm_temperature,
+                max_tokens=llm_max_tokens,
                 timeout=llm_timeout
             )
             self.llm_enabled = True
-            print(f"✓ LLM Explainer initialized (model: {llm_model}, url: {ollama_url}, timeout: {llm_timeout}s)")
+            print(
+                "✓ LLM Explainer initialized "
+                f"(model: {llm_model}, url: {ollama_url}, temp: {llm_temperature}, "
+                f"max_tokens: {llm_max_tokens}, timeout: {llm_timeout}s)"
+            )
         except Exception as e:
             self.llm_explainer = None
             self.llm_enabled = False

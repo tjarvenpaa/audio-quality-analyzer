@@ -23,6 +23,7 @@ class LLMExplainer:
                  ollama_url: str = "http://localhost:11434",
                  model: str = "mistral",
                  temperature: float = 0.7,
+                 max_tokens: int = 800,
                  timeout: int = 180):
         """
         Alusta LLM explainer
@@ -36,6 +37,7 @@ class LLMExplainer:
         self.ollama_url = ollama_url
         self.model = model
         self.temperature = temperature
+        self.max_tokens = max_tokens
         self.timeout = timeout
         self.prompt_dir = Path(__file__).parent / 'prompt_templates'
         
@@ -88,6 +90,20 @@ class LLMExplainer:
         
         # Kysy LLM:ltä
         explanation = self._query_llm(prompt)
+
+        # Jos vastaus on selvästi aiheen vierestä, yritä kerran tiukemmalla ohjeella.
+        if explanation and self._is_off_topic_response(explanation):
+            logger.warning("Off-topic LLM response detected, retrying with stricter prompt")
+            stricter_prompt = (
+                "IMPORTANT: Respond ONLY about the provided audio analysis report data. "
+                "Do not ask for files, datasets, or additional tasks.\n\n"
+                f"{prompt}"
+            )
+            retry = self._query_llm(stricter_prompt, max_retries=1)
+            if retry and not self._is_off_topic_response(retry):
+                return retry
+
+            return self._generate_safe_fallback_summary(context)
         
         return explanation
     
@@ -200,7 +216,7 @@ class LLMExplainer:
             'quality_breakdown': self._format_quality_breakdown(quality_breakdown),
             'issues': self._format_issues(issues),
             'recommendations': self._format_recommendations(top_recommendations),
-            'user_focus': user_notes if user_notes else 'General analysis',
+            'user_focus': self._sanitize_user_notes(user_notes),
             'improvement_potential': f"{recommendations.get('improvement_potential', 0)*100:.0f}%"
         }
         
@@ -244,11 +260,12 @@ class LLMExplainer:
                     f"{self.ollama_url}/api/generate",
                     json={
                         "model": self.model,
+                        "system": self._system_instruction(),
                         "prompt": prompt,
                         "stream": False,
                         "options": {
                             "temperature": self.temperature,
-                            "num_predict": 800  # Max tokens
+                            "num_predict": self.max_tokens
                         }
                     },
                     timeout=self.timeout  # Use configured timeout
@@ -261,6 +278,10 @@ class LLMExplainer:
                     result = response.json()
                     answer = result.get('response', '').strip()
                     print(f"     ✓ Success! Response length: {len(answer)} chars")
+
+                    if self._is_off_topic_response(answer):
+                        print("     ⚠ Off-topic content detected in response")
+
                     return answer
                 else:
                     print(f"     ✗ API error: {response.status_code}")
@@ -279,6 +300,61 @@ class LLMExplainer:
         
         print(f"     ✗ All retries failed")
         return None
+
+    def _system_instruction(self) -> str:
+        """Tiukka system-ohje, joka pitää vastauksen tehtävässä."""
+        return (
+            "You are an audio quality analyst. "
+            "Use only the provided audio report context. "
+            "Never switch domains (e.g., biodiversity, CSV tasks, role-play). "
+            "Never ask for file paths or additional datasets. "
+            "Do not output chain-of-thought or hidden reasoning. "
+            "Write a practical, concise report with clear recommendations."
+        )
+
+    def _sanitize_user_notes(self, user_notes: str) -> str:
+        """Rajoita käyttäjän huomiot turvalliseksi lisäkontekstiksi."""
+        if not user_notes:
+            return 'General analysis'
+
+        notes = user_notes.replace("```", " ").strip()
+        notes = " ".join(notes.split())
+
+        # Pidä vain lyhyt fokuskuvaus, jotta prompttiin ei päädy pitkiä ohjaavia tekstejä.
+        max_len = 300
+        if len(notes) > max_len:
+            notes = notes[:max_len].rstrip() + "..."
+
+        return notes if notes else 'General analysis'
+
+    def _is_off_topic_response(self, text: str) -> bool:
+        """Tunnista selvästi tehtävän ulkopuoliset LLM-vastaukset."""
+        lowered = (text or "").lower()
+        off_topic_markers = [
+            "environmental scientist",
+            "biodiversity",
+            "site a",
+            "site b",
+            "site c",
+            "csv",
+            "noise pollution",
+            "please provide a file path"
+        ]
+        return any(marker in lowered for marker in off_topic_markers)
+
+    def _generate_safe_fallback_summary(self, context: Dict) -> str:
+        """Palauta sääntöpohjainen fallback, jos LLM ei pysy aiheessa."""
+        return (
+            "Overall assessment:\n"
+            f"The recording quality is {context.get('overall_rating', 'Unknown')} "
+            f"({context.get('overall_score', 'N/A')}).\n\n"
+            "Key findings:\n"
+            f"{context.get('key_metrics', '  - N/A')}\n\n"
+            "Detected issues:\n"
+            f"{context.get('issues', '  No critical issues detected')}\n\n"
+            "Priority recommendations:\n"
+            f"{context.get('recommendations', '  No specific recommendations')}"
+        )
     
     def _fallback_prompt(self, context: Dict) -> str:
         """Fallback prompt jos template ei löydy"""
